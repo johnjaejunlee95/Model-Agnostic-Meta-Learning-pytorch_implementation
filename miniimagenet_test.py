@@ -20,7 +20,7 @@ def main():
     
     maml = Meta(args).to(device)
     
-    test_set = Mini(args.dataset_root, mode="test")
+    test_set = Mini(args.datasets_root, mode="test")
     test_dataset = l2l.data.MetaDataset(test_set)
     
     test_transforms = [
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     argparser.add_argument('--update_step_test', type=int, help='update steps for finetunning', default=10)
     argparser.add_argument('--test_num_task', type=int, help='number of tasks for validation', default=600)
     argparser.add_argument("--version", type=int, help='version of MAML', default=0)
-    argparser.add_argument("--datasets_root", type=str, help='version of MAML', default='/data01/jjlee_hdd/data')
+    argparser.add_argument("--datasets_root", type=str, help='root of datatsets', default='/data01/jjlee_hdd/data')
     
     args = argparser.parse_args()
     
