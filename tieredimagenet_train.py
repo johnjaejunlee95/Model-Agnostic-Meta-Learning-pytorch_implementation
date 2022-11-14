@@ -37,8 +37,8 @@ def main():
             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     
     #Load Tiered-Imagenet via learn2learn package/library (borrowed from learn2learn)
-    train = Tiered(args.dataset_root, transform=transform, mode="train", download=True)
-    val = Tiered(args.dataset_root, transform=transform, mode="validation")
+    train = Tiered(args.datasets_root, transform=transform, mode="train", download=True)
+    val = Tiered(args.datasets_root, transform=transform, mode="validation")
     
     
     train_dataset = l2l.data.MetaDataset(train)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     argparser.add_argument('--update_step', type=int, help='task-level inner update steps', default=5)
     argparser.add_argument('--update_step_test', type=int, help='update steps for finetunning', default=10)
     argparser.add_argument("--version", type=int, help='version of MAML', default=0)
-    argparser.add_argument("--datasets_root", type=str, help='version of MAML', default='/data01/jjlee_hdd/dataset_tieredimagenet/')
+    argparser.add_argument("--datasets_root", type=str, help='root of datatsets', default='/data01/jjlee_hdd/dataset_tieredimagenet/')
     
     args = argparser.parse_args()
 
