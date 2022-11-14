@@ -28,7 +28,7 @@ def main():
             transforms.ToTensor(),
             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     
-    test = Tiered(args.dataset_root, transform=transform, mode="test")
+    test = Tiered(args.datasets_root, transform=transform, mode="test")
     test_dataset = l2l.data.MetaDataset(test)
         
     test_transforms = [
