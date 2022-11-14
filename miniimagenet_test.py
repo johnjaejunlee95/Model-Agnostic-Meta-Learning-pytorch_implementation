@@ -1,0 +1,75 @@
+import torch
+import numpy as np
+import argparse
+import learn2learn as l2l
+
+from Miniimagenet import MiniImagenet as Mini
+from torch.utils.data import DataLoader
+from conv_model_architecture import Conv_block
+from meta import Meta
+from learn2learn.data.transforms import (NWays, KShots, LoadData, RemapLabels)
+from learn2learn.data.utils import  partition_task,  InfiniteIterator, OnDeviceDataset
+
+
+def main():
+    
+    torch.manual_seed(145)
+    torch.cuda.manual_seed_all(403)
+    np.random.seed(144)
+    device = torch.device('cuda')
+    
+    maml = Meta(args).to(device)
+    
+    test_set = Mini(args.dataset_root, mode="test")
+    test_dataset = l2l.data.MetaDataset(test_set)
+    
+    test_transforms = [
+        NWays(test_dataset, n = args.n_way),
+        KShots(test_dataset, k = args.k_spt*2),
+        LoadData(test_dataset),
+        RemapLabels(test_dataset),
+    ]
+
+    test_tasks = l2l.data.TaskDataset(test_dataset, task_transforms = test_transforms, num_tasks=args.test_num_task)
+    test_loader = DataLoader(test_tasks, pin_memory=True, shuffle = True)
+    
+    network = Conv_block(args.imgc, args.n_way, args.num_filters).to(device)
+    checkpoint = torch.load("/data01/jjlee_hdd/save_model/final_model/mini_5-"+str(args.k_spt)+"_"+str(args.version)+".pth")
+    network.load_state_dict(checkpoint['model_state_dict'])
+    
+    accs_all_test = []
+    all_loss = []
+    
+    for _ in range(args.test_num_task):
+        x_val, y_val = next(iter(test_loader))
+        (x_spt, y_spt), (x_qry, y_qry) = partition_task(x_val[0], y_val[0], shots=args.k_spt)
+        x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
+        model_test = maml.validation(x_spt, y_spt, x_qry, y_qry, network)
+        accs_all_test.append(model_test[0])
+        all_loss.append(model_test[1])
+    
+    accs = np.array(accs_all_test).mean(axis=0).astype(np.float16)
+    loss = np.array(all_loss).mean(axis=0).astype(np.float16)
+    stds = np.std(np.array(accs_all_test), 0)
+    ci95 = 1.96*stds/np.sqrt(args.test_num_task)
+    
+    print(np.around(accs*100, 2), np.around(loss, 2), np.around(ci95*100, 2))
+    
+if __name__ == '__main__':
+    
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--n_way', type=int, help='n way', default=5)
+    argparser.add_argument('--k_spt', type=int, help='k shot for support set', default=1)
+    argparser.add_argument('--imgc', type=int, help='imgc', default=3)
+    argparser.add_argument('--num_filters', type=int, help='size of filters of convblock', default=32)
+    argparser.add_argument('--meta_lr', type=float, help='meta-level outer learning rate', default=1e-3)
+    argparser.add_argument('--update_lr', type=float, help='task-level inner update learning rate', default=0.01)
+    argparser.add_argument('--update_step', type=int, help='task-level inner update steps', default=5)
+    argparser.add_argument('--update_step_test', type=int, help='update steps for finetunning', default=10)
+    argparser.add_argument('--test_num_task', type=int, help='number of tasks for validation', default=600)
+    argparser.add_argument("--version", type=int, help='version of MAML', default=0)
+    argparser.add_argument("--datasets_root", type=str, help='version of MAML', default='/data01/jjlee_hdd/data')
+    
+    args = argparser.parse_args()
+    
+    main()
