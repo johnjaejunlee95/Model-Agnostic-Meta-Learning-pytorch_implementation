@@ -1,2 +1,2 @@
 # MAML-learn2learn
-pytorch MAML implementation (using learn2learn)
+Unofficial pytorch MAML implementation (few-shot -> learn2learn)
