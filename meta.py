@@ -43,31 +43,32 @@ class Meta(nn.Module):
                     logits = network(x_spt[i], weights) 
                     loss_ = self.loss(logits, y_spt[i])
                     grad = torch.autograd.grad(loss_, weights.values(), create_graph=True, allow_unused=True)
+                    torch.nn.utils.clip_grad_norm_(weights.values(), 5)
                     updated_weights = OrderedDict((key, param - self.update_lr*grad) for ((key, param), grad) in zip(weights.items(), grad))
                 else:
                     logits = network(x_spt[i], updated_weights)
                     loss_ = self.loss(logits, y_spt[i])
                     grad = torch.autograd.grad(loss_, updated_weights.values(), create_graph=True, allow_unused=True)
+                    torch.nn.utils.clip_grad_norm_(updated_weights.values(), 5)
                     updated_weights = OrderedDict((key, param - self.update_lr*grad) for ((key, param), grad) in zip(updated_weights.items(), grad))
                 
-                
-                torch.nn.utils.clip_grad_norm_(updated_weights.values(), 10)
-                
-                logits_q = network(x_qry[i], updated_weights)
-                loss_q = self.loss(logits_q, y_qry[i])
-                with torch.no_grad():
-                    pred_q = F.softmax(logits_q, dim=1).argmax(dim=1)
-                    correct = torch.eq(pred_q, y_qry[i]).sum().item()
+                if k == self.update_step - 1 :
+                    weights = updated_weights
+                    
+            logits_q = network(x_qry[i], weights)
+            loss_q = self.loss(logits_q, y_qry[i])
+            with torch.no_grad():
+                pred_q = F.softmax(logits_q, dim=1).argmax(dim=1)
+                correct = torch.eq(pred_q, y_qry[i]).sum().item()
             corrects += correct
             losses_q = losses_q + loss_q
-        ###
         
         ### Outer Loop
         overall_loss = losses_q / task_num # Average Loss
         meta_optim.zero_grad()
         overall_loss.backward()
+        torch.nn.utils.clip_grad_norm_(network.parameters(), 5)
         meta_optim.step()
-        ###
 
         accs = np.array(corrects) / (querysz * task_num) # Accuracy
 
@@ -91,16 +92,14 @@ class Meta(nn.Module):
                 logits = network(x_spt, updated_weights)
                 loss_ = self.loss(logits, y_spt)
                 grad = torch.autograd.grad(loss_, updated_weights.values(), create_graph=True)
-                updated_weights = OrderedDict((key, param - self.update_lr*grad) for ((key, param), grad) in zip(updated_weights.items(), grad))
+                torch.nn.utils.clip_grad_norm_(updated_weights.values(), 5)
+                updated_weights = OrderedDict((key, param - self.update_lr*grad) for ((key, param), grad) in zip(updated_weights.items(), grad)) 
             
-            
+        with torch.no_grad():
             logits_q = network(x_qry, updated_weights)
             loss_q = self.loss(logits_q, y_qry)
-            
-            torch.nn.utils.clip_grad_norm_(updated_weights.values(), 10)
-            with torch.no_grad():
-                pred_q = F.softmax(logits_q, dim=1).argmax(dim=1)
-                correct = torch.eq(pred_q, y_qry).sum().item() 
+            pred_q = F.softmax(logits_q, dim=1).argmax(dim=1)
+            correct = torch.eq(pred_q, y_qry).sum().item() 
         
         accs = np.array(correct) / querysz # Accuracy
 
@@ -111,4 +110,3 @@ def main():
 
 if __name__ == '__main__':
     main()
- 
