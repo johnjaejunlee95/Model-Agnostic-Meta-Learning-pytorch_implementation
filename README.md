@@ -17,8 +17,8 @@ pip install learn2learn
 
 Next, **download the datasets** (reference from https://github.com/renmengye/few-shot-ssl-public):
 
-`mini-ImageNet`: [[Google Drive Link]]("https://drive.google.com/file/d/16V_ZlkW4SsnNDtnGmaBRq2OoPmUOc5mY/view", "because google drive policy has changed, must download manually")\
-`tiered-ImageNet`: [[Google Drive Link]]("https://drive.google.com/file/d/1g1aIDy2Ar_MViF2gDXFYDBTR-HYecV07/view", "because google drive policy has changed, must download manually")
+`mini-ImageNet`: [[Google Drive Link]](https://drive.google.com/file/d/16V_ZlkW4SsnNDtnGmaBRq2OoPmUOc5mY/view "because google drive policy has changed, must download manually")\
+`tiered-ImageNet`: [[Google Drive Link]](https://drive.google.com/file/d/1g1aIDy2Ar_MViF2gDXFYDBTR-HYecV07/view "because google drive policy has changed, must download manually")
 
 
 ## Training
