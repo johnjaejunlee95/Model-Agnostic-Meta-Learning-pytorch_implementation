@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # Meta-Learning (Inner-Loop & Outer Loop)
 class Meta(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args, network):
 
         super(Meta, self ).__init__()
 
@@ -21,11 +21,12 @@ class Meta(nn.Module):
         self.meta_lr = args.meta_lr
         self.update_step = args.update_step
         self.update_step_test = args.update_step_test
+        self.network = network
         self.loss = nn.CrossEntropyLoss()
+        self.meta_optim = optim.Adam(self.network.parameters(), lr=self.meta_lr)
+        
     
-    def forward(self, x_spt, y_spt, x_qry, y_qry, network):
-
-        meta_optim = optim.Adam(network.parameters(), lr=self.meta_lr) # meta-update optimizer
+    def forward(self, x_spt, y_spt, x_qry, y_qry):
         
         task_num = len(x_spt)
         querysz = x_qry[0].size(0)
@@ -33,18 +34,18 @@ class Meta(nn.Module):
         corrects = 0
 
         ### Inner Loop
-        network.train()
+        self.network.train()
         for i in range(task_num): # Iterate the # of batch-size (-> 4)
-            weights = OrderedDict((key, params) for (key, params) in network.named_parameters())
+            weights = OrderedDict((key, params) for (key, params) in self.network.named_parameters())
 
             for _ in range(self.update_step): # Iterate the # of Inner-Loop steps (training setting -> 5)
                 
-                logits = network(x_spt[i], weights) 
+                logits = self.network(x_spt[i], weights) 
                 loss_ = self.loss(logits, y_spt[i])
                 grad = torch.autograd.grad(loss_, weights.values(), create_graph=True)
                 weights = OrderedDict((key, param - self.update_lr*grad) for ((key, param), grad) in zip(weights.items(), grad))
                     
-            logits_q = network(x_qry[i], weights)
+            logits_q = self.network(x_qry[i], weights)
             loss_q = self.loss(logits_q, y_qry[i])
             
             with torch.no_grad():
@@ -57,22 +58,22 @@ class Meta(nn.Module):
         ### Outer Loop
         overall_loss = losses_q / task_num # Average Loss
         
-        meta_optim.zero_grad()
+        self.meta_optim.zero_grad()
         overall_loss.backward()
-        meta_optim.step()
+        self.meta_optim.step()
 
         accs = np.array(corrects) / (querysz * task_num) # Accuracy
 
-        return accs, overall_loss.detach().cpu().numpy(), network, meta_optim  
+        return accs, overall_loss.detach().cpu().numpy(), self.network
 
-    def validation(self, x_spt, y_spt, x_qry, y_qry, model):
+    def validation(self, x_spt, y_spt, x_qry, y_qry):
         
         querysz = x_qry.size(0)
-        network = deepcopy(model) # copy the meta-parameters not to update during Validation/Test
+        network = deepcopy(self.network) # copy the meta-parameters not to update during Validation/Test
         
         weights = OrderedDict((key, params) for (key, params) in network.named_parameters())
 
-        for k in range(self.update_step_test): # Iterate the # of Inner-Loop steps (validation/test gradient steps -> 10)
+        for _ in range(self.update_step_test): # Iterate the # of Inner-Loop steps (validation/test gradient steps -> 10)
             
             logits = network(x_spt, weights)
             loss_ = self.loss(logits, y_spt)
