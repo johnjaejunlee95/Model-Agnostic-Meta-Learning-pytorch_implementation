@@ -16,12 +16,9 @@ from learn2learn.data.utils import partition_task
 torch.manual_seed(45)
 torch.cuda.manual_seed_all(430)
 np.random.seed(100)
+device = torch.device('cuda')
 
 def main():
-    
-    # Setting random seed for consistency
-    
-    device = torch.device('cuda')
 
     #Initialized Backbone Architecture (-> conv4)
     network = Conv_block(args.imgc, args.n_way, args.num_filters).to(device) 
@@ -32,7 +29,6 @@ def main():
     #Load Tiered-Imagenet via learn2learn package/library (borrowed from learn2learn)
     train = Tiered(args.datasets_root, transform=transforms.ToTensor(), mode="train", download=True)
     val = Tiered(args.datasets_root, transform=transforms.ToTensor(), mode="validation", download=True)
-    
     
     train_dataset = data.MetaDataset(train)
     val_dataset = data.MetaDataset(val)
@@ -66,17 +62,15 @@ def main():
         x_spt_, y_spt_, x_qry_, y_qry_ = [], [], [], []
         x, y = next(iter(train_loader))
         for i in range(args.task_num):
-            (x_spt, y_spt), (x_qry, y_qry) = partition_task(x[i], y[i], shots=args.k_spt)
-            x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
+            (x_spt, y_spt), (x_qry, y_qry) = partition_task(x[i].to(device), y[i].to(device), shots=args.k_spt)
             x_spt_.append(x_spt), y_spt_.append(y_spt), x_qry_.append(x_qry), y_qry_.append(y_qry)
 
-    
         result = maml(x_spt_, y_spt_, x_qry_, y_qry_) 
         
         ## Print the result at every 100 epochs
         if (epoch+1) % 100 == 0 or epoch == 0:
-            result = 'epoch: {0} \ttraining acc: {1:0.4f} \tloss: {2:0.4f}'.format(epoch+1, result[0], result[1])
-            print(result)
+            print_result = 'epoch: {0} \ttraining acc: {1:0.4f} \tloss: {2:0.4f}'.format(epoch+1, result[0], result[1])
+            print(print_result)
             
         # Evaluate at every 500 epochs (Meta-Validation)
         if (epoch+1) % 500 == 0:
@@ -84,8 +78,8 @@ def main():
             all_loss = []
             for _ in range(args.val_task):
                 x_val, y_val = next(iter(val_loader))
-                (x_spt_val, y_spt_val), (x_qry_val, y_qry_val) = partition_task(x_val.squeeze(0), y_val[0].squeeze(0), shots=args.k_spt)
-                x_spt_val, y_spt_val, x_qry_val, y_qry_val = x_spt_val.to(device), y_spt_val.to(device), x_qry_val.to(device), y_qry_val.to(device)
+                (x_spt_val, y_spt_val), (x_qry_val, y_qry_val) = partition_task(x_val.squeeze(0).to(device), y_val.squeeze(0).to(device), shots=args.k_spt)
+
                 result_test = maml.validation(x_spt_val, y_spt_val, x_qry_val, y_qry_val)
                 accs_all_test.append(result_test[0])
                 all_loss.append(result_test[1])
@@ -93,8 +87,8 @@ def main():
             accs = np.array(accs_all_test).mean(axis=0).astype(np.float16)
             loss = np.array(all_loss).mean(axis=0).astype(np.float16)
 
-            result_=  'epoch: {0} \tvalidation acc: {1:0.4f} \tloss: {2:0.4f} **'.format(epoch+1, accs, loss)
-            print(result_)
+            print_result_val =  'epoch: {0} \tvalidation acc: {1:0.4f} \tloss: {2:0.4f} **'.format(epoch+1, accs, loss)
+            print(print_result_val)
             #save the best model (result from validation datasets)
             if best_acc <= accs:
                 best_acc = accs
@@ -112,10 +106,7 @@ def main():
                         'epoch': epoch,
                         'model_state_dict': result[2].state_dict(),
                         'loss': result[1]
-                        },"/data01/jjlee_hdd/save_model/final_model/Tiered_5-"+str(args.k_spt)+"_"+str(args.version)+".pt" )
-        
-        
-            
+                        },"/data01/jjlee_hdd/save_model/final_model/Tiered_5-"+str(args.k_spt)+"_"+str(args.version)+".pt" )   
 
 if __name__ == '__main__':
 
