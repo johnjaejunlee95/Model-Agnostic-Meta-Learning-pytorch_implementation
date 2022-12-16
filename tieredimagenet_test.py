@@ -20,7 +20,7 @@ device = torch.device('cuda')
 
 def main():
     
-    network = Conv_block(args.imgc, args.n_way, args.num_filters).to(device)
+    network = Conv_block(args.imgc, args.n_way, args.filter_size).to(device)
     checkpoint = torch.load("/data01/jjlee_hdd/save_model/final_model/Tiered_5-"+str(args.k_spt)+"_"+str(args.version)+".pth")
     network.load_state_dict(checkpoint['model_state_dict'])
     
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     argparser.add_argument('--n_way', type=int, help='n way', default=5)
     argparser.add_argument('--k_spt', type=int, help='k shot for support set', default=1)
     argparser.add_argument('--imgc', type=int, help='imgc', default=3)
-    argparser.add_argument('--num_filters', type=int, help='size of filters of convblock', default=32)
+    argparser.add_argument('--filter_size', type=int, help='size of filters of convblock', default=64)
     argparser.add_argument('--meta_lr', type=float, help='meta-level outer learning rate', default=1e-3)
     argparser.add_argument('--update_lr', type=float, help='task-level inner update learning rate', default=1e-2)
     argparser.add_argument('--update_step', type=int, help='task-level inner update steps', default=5)
