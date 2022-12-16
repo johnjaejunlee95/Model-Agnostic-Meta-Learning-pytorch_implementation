@@ -52,7 +52,7 @@ option arguments:
 | Original | 48.7 $\pm$ 1.84%| 63.11 $\pm$ 0.92% |  
 | Ours (reproduced) | 47.93 $\pm$ 1.85% | 62.43 $\pm$ 0.89% |  
   
-**`tiered-ImageNet`**
+**`tiered-ImageNet`** (Use wider 4-ConvBlock: filter_size = 64)
 |  | 5-Way 1-Shot | 5-Way 5-Shot |  
 |------|---|---|  
 | Original | 51.67 $\pm$ 1.81% | 70.30 $\pm$ 1.75% |  
