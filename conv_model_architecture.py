@@ -4,13 +4,14 @@ from torch.nn import functional as F
 from collections import OrderedDict
 import numpy as np
 
+torch.manual_seed(43)
+torch.cuda.manual_seed(542)
+torch.cuda.manual_seed_all(117)
 
 class Conv_block(nn.Module):
     
     def init_weights(self):
-        torch.manual_seed(43)
-        torch.cuda.manual_seed(542)
-        torch.cuda.manual_seed_all(117)
+        
         print('init weights')
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -42,7 +43,7 @@ class Conv_block(nn.Module):
                 ('relu4', nn.ReLU()),
                 ('pool4', nn.MaxPool2d(kernel_size=2, stride=1, padding=0))
         ]))
-        self.add_module('fc', nn.Linear(32 * 5 * 5, out_ch))
+        self.add_module('fc', nn.Linear(filter_size * 5 * 5, out_ch))
         self.init_weights()
         
         
