@@ -117,7 +117,7 @@ if __name__ == '__main__':
     argparser.add_argument('--k_qry', type=int, help='k shot for query set', default=15)
     argparser.add_argument('--imgsz', type=int, help='imgsz', default=84)
     argparser.add_argument('--imgc', type=int, help='imgc', default=3)
-    argparser.add_argument('--num_filters', type=int, help='size of filters of convblock', default=32)
+    argparser.add_argument('--num_filters', type=int, help='size of filters of convblock', default=64)
     argparser.add_argument('--task_num', type=int, help='meta batch size, namely task num', default=4)
     argparser.add_argument('--val_task', type=int, help='number of tasks for validation', default=600)
     argparser.add_argument('--meta_lr', type=float, help='meta-level outer learning rate', default=1e-3)
