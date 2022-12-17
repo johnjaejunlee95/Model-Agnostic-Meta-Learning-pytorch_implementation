@@ -34,7 +34,7 @@ option arguments:
 --k_qry:            number of query samples (default: 15)  
 --imgsz:            resizing images (--> 3*84*84) (default: 84)  
 --imgc:             RGB(image channel) (default: 3)  
---num_filters :     size of convolution filters (default: 32)  
+--filter_size :     size of convolution filters (default: 32)  
 --task_num:         meta-batch size (default: 4)  
 --val_task:         number of tasks for evaluation (default: 600)  
 --meta_lr:          outer-loop learning rate (default: 1e-3)  
