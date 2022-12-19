@@ -56,4 +56,4 @@ option arguments:
 |  | 5-Way 1-Shot | 5-Way 5-Shot |  
 |------|---|---|  
 | Original | 51.67 $\pm$ 1.81% | 70.30 $\pm$ 1.75% |  
-| Ours (reproduced) | tba | tba |  
+| Ours (reproduced) | 51.15 $\pm$ 1.85% | 64.98 $\pm$ 0.90% |  
