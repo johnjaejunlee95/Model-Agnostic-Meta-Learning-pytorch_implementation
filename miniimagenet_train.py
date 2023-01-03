@@ -41,7 +41,7 @@ def main():
         ] # -> setting train datasets
     val_transforms = [
         NWays(val_dataset, n = args.n_way),
-        KShots(val_dataset, k = args.k_qry*2),
+        KShots(val_dataset, k = args.k_spt*2),
         LoadData(val_dataset),
         RemapLabels(val_dataset)
         ] # -> setting validation datasets
